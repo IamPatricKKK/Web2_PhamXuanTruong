@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{base}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Công Việc</title>
+    <style>
+        .calendar-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .calendar-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            padding: 10px;
+        }
+
+        .calendar-weekday {
+            text-align: center;
+            font-weight: bold;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+
+        .calendar-weekday:first-child {
+            color: red;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: 100px;
+        }
+
+        .calendar-day:hover {
+            background: #f8f8f8;
+            transform: scale(1.02);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .solar-date {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .today {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+
+        .weekend {
+            background: #fff8e1;
+        }
+
+        .sunday {
+            color: red;
+        }
+
+        .holiday {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .calendar-event {
+            font-size: 0.75em;
+            margin: 2px 0;
+            padding: 4px 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: white;
+            cursor: pointer;
+            background-color: #3498db;
+        }
+
+        .calendar-event:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .empty-day {
+            background: #f9f9f9;
+            border: 1px dashed #ddd;
+        }
+
+        .events-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-container {
+                margin: 10px;
+                padding: 10px;
+            }
+            
+            .calendar-grid {
+                gap: 4px;
+                padding: 5px;
+            }
+
+            .calendar-day {
+                padding: 4px;
+                min-height: 80px;
+            }
+
+            .solar-date {
+                font-size: 1em;
+            }
+
+            .calendar-event {
+                font-size: 0.7em;
+                padding: 2px 4px;
+            }
+            
+            .red-dot {
+			    width: 8px;
+			    height: 8px;
+			    background-color: red;
+			    border-radius: 50%;
+			    margin-top: 4px;
+			    align-self: center;
+			}
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <h2>Lịch Công Việc</h2>
+        </div>
+        
+        <div class="calendar-navigation">
+            <button class="btn btn-outline-primary" onclick="previousMonth()">
+                <i class="fas fa-chevron-left"></i> Tháng trước
+            </button>
+            <h3 id="currentMonth">Tháng 12 năm 2023</h3>
+            <button class="btn btn-outline-primary" onclick="nextMonth()">
+                Tháng sau <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <div class="calendar-grid">
+            <!-- Weekday headers -->
+            <div class="calendar-weekday sunday">CN</div>
+            <div class="calendar-weekday">T2</div>
+            <div class="calendar-weekday">T3</div>
+            <div class="calendar-weekday">T4</div>
+            <div class="calendar-weekday">T5</div>
+            <div class="calendar-weekday">T6</div>
+            <div class="calendar-weekday">T7</div>
+        </div>
+
+        <div id="calendarDays" class="calendar-grid">
+            <!-- Calendar days will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        // Get events from Thymeleaf
+        const eventsData = /*[[${events}]]*/ '[]';
+        console.log("Raw events data:", eventsData);
+        const eventsList = JSON.parse(eventsData || '[]');
+        console.log("Parsed events:", eventsList);
+        
+        let currentDate = new Date();
+        
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+        
+        function updateCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            // Update header
+            document.getElementById('currentMonth').textContent = 
+                `Tháng ${month + 1} năm ${year}`;
+            
+            // Clear existing calendar
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+            
+            // Get first day of month and total days
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const totalDays = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+            
+            // Add empty cells for days before start of month
+            for (let i = 0; i < startingDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty-day';
+                calendarDays.appendChild(emptyDay);
+            }
+            
+            // Add days of the month
+            for (let day = 1; day <= totalDays; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                const date = new Date(year, month, day);
+                const dayOfWeek = date.getDay();
+                
+                // Add weekend class for Saturday and Sunday
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    dayElement.classList.add('weekend');
+                }
+                
+                // Add sunday class for Sundays
+                if (dayOfWeek === 0) {
+                    dayElement.classList.add('sunday');
+                }
+                
+                // Check if it's today
+                const today = new Date();
+                if (today.getDate() === day && 
+                    today.getMonth() === month && 
+                    today.getFullYear() === year) {
+                    dayElement.classList.add('today');
+                }
+                
+                // Add solar date
+                const solarDate = document.createElement('div');
+                solarDate.className = 'solar-date';
+                solarDate.textContent = day;
+                dayElement.appendChild(solarDate);
+                
+                // Add events container
+                const eventsContainer = document.createElement('div');
+                eventsContainer.className = 'events-container';
+                
+                // Find events for this day
+                const currentDateStr = formatDate(new Date(year, month, day));
+                console.log("Checking date:", currentDateStr);
+                
+                const dayEvents = eventsList.filter(event => {
+                    if (!event || !event.startTime) return false;
+                    const eventDate = new Date(event.startTime);
+                    const eventDateStr = formatDate(eventDate);
+                    return eventDateStr === currentDateStr;
+                });
+                
+                if (dayEvents.length > 0) {
+                    const redDot = document.createElement('div');
+                    redDot.className = 'red-dot';
+                    dayElement.appendChild(redDot);
+                }
+                
+                console.log("Events for", currentDateStr, ":", dayEvents);
+                
+                // Add events
+                dayEvents.forEach(event => {
+                    const eventElement = document.createElement('div');
+                    eventElement.className = 'calendar-event';
+                    eventElement.textContent = event.title || 'Không có tiêu đề';
+                    
+                    // Set background color based on event type
+                    if (event.type && event.type.color) {
+                        eventElement.style.backgroundColor = event.type.color;
+                    }
+                    
+                    // Add click event to go to form
+                    eventElement.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        window.location.href = '/events/create';
+                    });
+                    
+                    eventsContainer.appendChild(eventElement);
+                });
+                
+                dayElement.appendChild(eventsContainer);
+                
+                // Add click event to go to form
+                dayElement.addEventListener('click', function() {
+                    window.location.href = '/events/create';
+                });
+                
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // Add empty cells for remaining days
+            const totalCells = calendarDays.children.length;
+            const remainingCells = 42 - totalCells; // 6 rows × 7 days = 42
+            for (let i = 0; i < remainingCells; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty-day';
+                calendarDays.appendChild(emptyDay);
+            }
+        }
+        
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            updateCalendar();
+        }
+        
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            updateCalendar();
+        }
+        
+        // Initialize calendar
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCalendar();
+        });
+    </script>
+</div>
+</body>
+</html> 

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{base}">
+<head>
+    <title>Quản Lý Sự Kiện - TaskFlow Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .event-card {
+            transition: transform 0.2s;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .event-card:hover {
+            transform: translateY(-5px);
+        }
+        .event-card.important {
+            background-color: #fff3cd;
+        }
+        .event-card.all-day {
+            border: 2px solid #198754;
+        }
+        .filter-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .badge-type {
+            font-size: 0.8em;
+            padding: 5px 10px;
+            border-radius: 15px;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>Quản Lý Công Việc
+                </h2>
+                <a href="/events/create" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Thêm Công Việc Mới
+                </a>
+            </div>
+
+			<!-- Filters -->
+			<div class="filter-section mb-4">
+			    <form id="filterForm" method="GET" action="/events/dashboard">
+			        <div class="row g-3 align-items-end">
+			            <div class="col-md-2">
+			                <label class="form-label">Loại Công Việc</label>
+			                <select class="form-select" name="typeId" id="typeFilter">
+			                    <option value="">Tất cả</option>
+			                    <option th:each="type : ${eventTypes}" 
+			                            th:value="${type.id}"
+			                            th:text="${type.typeName}"
+			                            th:selected="${type.id == typeId}"></option>
+			                </select>
+			            </div>
+			            <div class="col-md-2">
+			                <label class="form-label">Quan Trọng</label><br>
+			                <input type="checkbox" name="isImportant" id="importantFilter" 
+			                       th:checked="${isImportant} ? 'checked' : null" /> Có quan trọng
+			            </div>
+			            <div class="col-md-2">
+			                <label class="form-label">Sắp xếp</label>
+			                <select class="form-select" name="sortBy" id="sortBy">
+			                    <option value="newest" th:selected="${sortBy == 'newest'}">Mới nhất</option>
+			                    <option value="oldest" th:selected="${sortBy == 'oldest'}">Cũ nhất</option>
+			                    <option value="nameAsc" th:selected="${sortBy == 'nameAsc'}">Tên A-Z</option>
+			                    <option value="nameDesc" th:selected="${sortBy == 'nameDesc'}">Tên Z-A</option>
+			                    <option value="dateAsc" th:selected="${sortBy == 'dateAsc'}">Ngày tháng tăng dần</option>
+			                    <option value="dateDesc" th:selected="${sortBy == 'dateDesc'}">Ngày tháng giảm dần</option>
+			                </select>
+			            </div>
+			            <div class="col-md-2">
+			                <label class="form-label">Từ Ngày</label>
+			                <input type="datetime-local" class="form-control" name="startDate" id="startDate" th:value="${startDate}">
+			            </div>
+			            <div class="col-md-2">
+			                <label class="form-label">Đến Ngày</label>
+			                <input type="datetime-local" class="form-control" name="endDate" id="endDate" th:value="${endDate}">
+			            </div>
+			            <div class="col-md-2">
+			                <label class="form-label">Tìm Kiếm</label>
+			                <input type="text" class="form-control" name="keyword" id="searchEvent" placeholder="Tên hoặc nội dung" th:value="${keyword}">
+			            </div>
+			            <div class="col-md-12 text-end">
+			                <button type="submit" class="btn btn-primary mt-2">
+			                    <i class="fas fa-filter me-2"></i>Lọc
+			                </button>
+			                <a href="/events/dashboard" class="btn btn-secondary mt-2 ms-2">Xóa lọc</a>
+			            </div>
+			        </div>
+			    </form>
+			</div>
+
+
+            <!-- Event List -->
+            <div class="row" id="eventList">
+                <div class="col-md-6 col-lg-4 mb-4" th:each="event : ${events}">
+                    <div class="card event-card h-100" 
+                         th:classappend="${event.isImportant ? 'important' : ''} + ' ' + ${event.isAllDay ? 'all-day' : ''}"
+                         th:style="${event.type != null} ? 'border-left: 4px solid ' + ${event.type.color} : 'border-left: 4px solid #ccc'"
+                         th:data-type-id="${event.type != null ? event.type.id : ''}"
+                         th:data-type-color="${event.type != null ? event.type.color : ''}"
+                         th:data-start-time="${#temporals.format(event.startTime, 'yyyy-MM-dd')}"
+                         th:data-title="${event.title}"
+                         th:data-description="${event.description}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0" th:text="${event.title}">Tiêu đề</h5>
+                                <div class="dropdown">
+                                    <button class="btn btn-link" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" th:href="@{/events/edit/{id}(id=${event.id})}">
+                                            <i class="fas fa-edit me-2"></i>Chỉnh sửa
+                                        </a></li>
+                                        <li><a class="dropdown-item text-danger" href="#" 
+                                               th:onclick="'deleteEvent(' + ${event.id} + ')'">
+                                            <i class="fas fa-trash-alt me-2"></i>Xóa
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <p class="card-text" th:text="${event.description}">Mô tả</p>
+                            
+                            <div class="mb-2">
+                                <span class="badge badge-type" 
+                                      th:if="${event.type != null}"
+                                      th:style="'background-color: ' + ${event.type.color}"
+                                      th:text="${event.type.typeName}">
+                                </span>
+                                <span class="badge bg-warning ms-1" th:if="${event.isImportant}">
+                                    <i class="fas fa-star me-1"></i>Quan trọng
+                                </span>
+                                <span class="badge bg-success ms-1" th:if="${event.isAllDay}">
+                                    <i class="fas fa-calendar-day me-1"></i>Cả ngày
+                                </span>
+                            </div>
+                            
+                            <div class="small text-muted">
+                                <div>
+                                    <i class="fas fa-clock me-1"></i>
+                                    <span th:text="${#temporals.format(event.startTime, 'dd/MM/yyyy HH:mm')} + ' - Bắt đầu'">
+                                        Thời gian bắt đầu
+                                    </span>
+                                </div>
+                                <div th:if="${!event.isAllDay}">
+                                    <i class="fas fa-hourglass-end me-1"></i>
+                                    <span th:text="${#temporals.format(event.endTime, 'dd/MM/yyyy HH:mm')} + ' - Kết thúc'">
+                                        Thời gian kết thúc
+                                    </span>
+                                </div>
+                                <div th:if="${event.remindTime != null}">
+                                    <i class="fas fa-bell me-1"></i>
+                                    <span th:text="${#temporals.format(event.remindTime, 'dd/MM/yyyy HH:mm')} + ' - Nhắc lại'">
+                                        Thời gian nhắc nhở
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No Events Message -->
+            <div id="noEventsMessage" class="text-center py-5 hidden">
+                <i class="fas fa-calendar-xmark fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Không tìm thấy công việc nào</h4>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Xác nhận xóa</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        Bạn có chắc chắn muốn xóa công việc này không?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete()">Xóa</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+	
+
+</body>
+</html> 

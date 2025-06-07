@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{base}">
+<head>
+    <title>Trang Chủ - Todo List Todo</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Welcome Section -->
+        <div class="container py-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 mb-4 fade-in">Chào mừng đến với Todo List Todo</h1>
+                    <p class="lead mb-4 fade-in">Giải pháp quản lý công việc thông minh giúp bạn tổ chức và theo dõi các nhiệm vụ một cách hiệu quả.</p>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start fade-in">
+                        <a th:href="@{/login}" class="btn btn-primary btn-lg px-4 me-md-2">
+                            <i class="fas fa-sign-in-alt me-2"></i>Đăng Nhập
+                        </a>
+                        <a th:href="@{/register}" class="btn btn-outline-secondary btn-lg px-4">
+                            <i class="fas fa-user-plus me-2"></i>Đăng Ký
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 mt-5 mt-lg-0">
+                    <div class="text-center fade-in">
+                        <i class="fas fa-tasks fa-5x text-primary mb-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="bg-light py-5">
+            <div class="container">
+                <h2 class="text-center mb-5 fade-in">Tính Năng Nổi Bật</h2>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm fade-in hover-card">
+                            <a th:href="@{/events/dashboard}" class="text-decoration-none">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-list-check fa-3x text-primary mb-3"></i>
+                                    <h4 class="text-dark">Quản Lý Công Việc</h4>
+                                    <p class="text-muted">Dễ dàng tạo, sắp xếp và theo dõi các công việc của bạn</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm fade-in">
+                            <div class="card-body text-center">
+                                <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
+                                <h4>Lịch Thông Minh</h4>
+                                <p>Xem và quản lý công việc theo ngày, tuần, tháng</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm fade-in">
+                            <div class="card-body text-center">
+                                <i class="fas fa-bell fa-3x text-primary mb-3"></i>
+                                <h4>Nhắc Nhở</h4>
+                                <p>Không bỏ lỡ deadline với hệ thống nhắc nhở thông minh</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="container py-5">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h2 class="mb-4 fade-in">Bắt đầu sử dụng Todo List Todo ngay hôm nay</h2>
+                    <p class="lead mb-4 fade-in">Đăng ký miễn phí và trải nghiệm các tính năng tuyệt vời của chúng tôi.</p>
+                    <a th:href="@{/register}" class="btn btn-primary btn-lg px-5 fade-in">
+                        <i class="fas fa-rocket me-2"></i>Bắt Đầu Ngay
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

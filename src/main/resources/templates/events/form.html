@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{base}">
+<head>
+    <title th:text="${event.id != null ? 'Chỉnh Sửa Công Việc' : 'Thêm Công Việc Mới'} + ' - Todo List Todo'">Thêm/Sửa Công Việc</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .form-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .required-field::after {
+            content: " *";
+            color: red;
+        }
+        .datetime-group {
+            position: relative;
+        }
+        .datetime-group .form-control {
+            padding-left: 35px;
+        }
+        .datetime-group i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    <span th:text="${event.id != null ? 'Chỉnh Sửa Công Việc' : 'Thêm Công Việc'}">Thêm/Sửa Công Việc</span>
+                </h2>
+                <a href="/events/dashboard" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Quay lại
+                </a>
+            </div>
+
+            <form th:action="${event.id != null ? '/events/edit/' + event.id : '/events/create'}" 
+                  th:object="${event}" method="post" class="needs-validation" novalidate>
+                
+                <!-- Thông tin cơ bản -->
+                <div class="form-section">
+                    <h5 class="mb-3">Thông tin cơ bản</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="title" class="form-label required-field">Tiêu đề</label>
+                            <input type="text" class="form-control" id="title" th:field="*{title}" 
+                                   required maxlength="255" placeholder="Nhập tiêu đề công việc">
+                            <div class="invalid-feedback">Vui lòng nhập tiêu đề công việc</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="type" class="form-label required-field">Loại công việc</label>
+                            <select class="form-select" id="type" th:field="*{type}" required>
+                                <option value="">Chọn loại công việc</option>
+                                <option th:each="type : ${eventTypes}"
+                                        th:value="${type.id}"
+                                        th:text="${type.typeName}"
+                                        th:style="'color: ' + ${type.color}">
+                                </option>
+                            </select>
+                            <div class="invalid-feedback">Vui lòng chọn loại công việc</div>
+                        </div>
+                        <div class="col-12">
+                            <label for="description" class="form-label">Mô tả</label>
+                            <textarea class="form-control" id="description" th:field="*{description}" 
+                                      rows="3" maxlength="255" placeholder="Nhập mô tả chi tiết về công việc"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thời gian -->
+                <div class="form-section">
+                    <h5 class="mb-3">Thời gian</h5>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="isAllDay" th:field="*{isAllDay}">
+                                <label class="form-check-label" for="isAllDay">
+                                    <i class="fas fa-calendar-day me-2"></i>Cả ngày
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="startTime" class="form-label required-field">Thời gian bắt đầu</label>
+                            <div class="datetime-group">
+                                <i class="fas fa-clock"></i>
+                                <input type="datetime-local" class="form-control" id="startTime" 
+                                       th:field="*{startTime}" required>
+                            </div>
+                            <div class="invalid-feedback">Vui lòng chọn thời gian bắt đầu</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="endTime" class="form-label required-field">Thời gian kết thúc</label>
+                            <div class="datetime-group">
+                                <i class="fas fa-hourglass-end"></i>
+                                <input type="datetime-local" class="form-control" id="endTime" 
+                                       th:field="*{endTime}" required>
+                            </div>
+                            <div class="invalid-feedback">Vui lòng chọn thời gian kết thúc</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tùy chọn bổ sung -->
+                <div class="form-section">
+                    <h5 class="mb-3">Tùy chọn bổ sung</h5>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="isImportant" th:field="*{isImportant}">
+                                <label class="form-check-label" for="isImportant">
+                                    <i class="fas fa-star me-2"></i>Đánh dấu là công việc quan trọng
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="setReminder" 
+                                       th:checked="${event.remindTime != null}">
+                                <label class="form-check-label" for="setReminder">
+                                    <i class="fas fa-bell me-2"></i>Đặt nhắc nhở
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6" id="reminderTimeGroup" style="display: none;">
+                            <label for="remindTime" class="form-label">Thời gian nhắc nhở</label>
+                            <div class="datetime-group">
+                                <i class="fas fa-bell"></i>
+                                <input type="datetime-local" class="form-control" id="remindTime" 
+                                       th:field="*{remindTime}">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label for="note" class="form-label">Ghi chú</label>
+                            <textarea class="form-control" id="note" th:field="*{note}" 
+                                      rows="2" maxlength="255" placeholder="Thêm ghi chú cho công việc"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/events/dashboard" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>Hủy
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>
+                        <span th:text="${event.id != null ? 'Cập nhật' : 'Tạo mới'}">Lưu</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            // Form validation
+            (function () {
+                'use strict'
+                const forms = document.querySelectorAll('.needs-validation')
+                Array.from(forms).forEach(form => {
+                    form.addEventListener('submit', event => {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+            })()
+
+            // Handle reminder toggle
+            const setReminderCheckbox = document.getElementById('setReminder');
+            const reminderTimeGroup = document.getElementById('reminderTimeGroup');
+            const remindTimeInput = document.getElementById('remindTime');
+
+            setReminderCheckbox.addEventListener('change', function() {
+                reminderTimeGroup.style.display = this.checked ? 'block' : 'none';
+                if (!this.checked) {
+                    remindTimeInput.value = '';
+                }
+            });
+
+            // Initialize reminder group visibility
+            reminderTimeGroup.style.display = setReminderCheckbox.checked ? 'block' : 'none';
+
+            // Handle all-day event
+            const isAllDayCheckbox = document.getElementById('isAllDay');
+            const startTimeInput = document.getElementById('startTime');
+            const endTimeInput = document.getElementById('endTime');
+
+            isAllDayCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // If all-day is checked, set time to 00:00 for start and 23:59 for end
+                    const startDate = startTimeInput.value.split('T')[0];
+                    const endDate = endTimeInput.value.split('T')[0];
+                    startTimeInput.value = startDate + 'T00:00';
+                    endTimeInput.value = endDate + 'T23:59';
+                }
+            });
+
+            // Validate end time is after start time
+            startTimeInput.addEventListener('change', validateDateRange);
+            endTimeInput.addEventListener('change', validateDateRange);
+
+            function validateDateRange() {
+                const startTime = new Date(startTimeInput.value);
+                const endTime = new Date(endTimeInput.value);
+
+                if (endTime < startTime) {
+                    endTimeInput.value = startTimeInput.value;
+                }
+            }
+        </script>
+    </th:block>
+</body>
+</html> 
